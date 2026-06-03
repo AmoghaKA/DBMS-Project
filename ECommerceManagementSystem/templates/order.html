@@ -1,0 +1,204 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="orders-workspace">
+    <!-- Left Pane: Order Registry and Placement -->
+    <div class="panel">
+        <div class="panel-head compact">
+            <div>
+                <p class="section-kicker">Order Registry</p>
+                <h3>Place New Order</h3>
+            </div>
+        </div>
+        <form method="post" action="{{ url_for('create_order') }}" class="form-grid single-col js-validate" data-validate="true">
+            <div class="form-group">
+                <label for="customer_id">Select Customer</label>
+                <select id="customer_id" name="customer_id" required>
+                    <option value="">-- Choose Customer --</option>
+                    {% for cust in customers %}
+                    <option value="{{ cust.customer_id }}">
+                        {{ cust.name }} (ID: {{ cust.customer_id }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="solid-btn">Create Blank Order</button>
+            </div>
+        </form>
+
+        <hr style="border: 0; border-top: 1px solid var(--border-light); margin: 2rem 0;">
+
+        <div class="panel-head compact">
+            <div>
+                <p class="section-kicker">Manage Orders</p>
+                <h3>Order Log</h3>
+            </div>
+            <input type="search" class="search-input" placeholder="Search orders..." data-search-input style="max-width: 180px;">
+        </div>
+        <div class="table-wrap" data-search-table>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Order</th>
+                        <th>Customer</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for o in orders %}
+                    <tr class="{{ 'active-row' if selected_order_id == o.order_id else '' }}" style="{{ 'background: rgba(255,255,255,0.03); border-left: 3px solid var(--color-primary);' if selected_order_id == o.order_id else '' }}">
+                        <td>
+                            <a class="text-link" href="{{ url_for('orders', order_id=o.order_id) }}">
+                                <strong>#{{ o.order_id }}</strong>
+                            </a>
+                            <br><small style="color: var(--text-muted);">{{ o.order_date }}</small>
+                        </td>
+                        <td>
+                            {{ o.customer_name }}
+                            <br><small style="color: var(--text-muted);">{{ o.item_count }} items</small>
+                        </td>
+                        <td>{{ o.total_amount|currency }}</td>
+                        <td><span class="pill {{ o.payment_status }}">{{ o.payment_status }}</span></td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" class="empty-state">No orders placed yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Right Pane: Selected Order Details & Items Desk -->
+    <div class="panel">
+        {% if selected_order %}
+        <div class="panel-head">
+            <div>
+                <p class="section-kicker">Order Detail Desk</p>
+                <h3>Order #{{ selected_order.order_id }} Details</h3>
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+                <a class="ghost-btn" href="{{ url_for('order_summary', order_id=selected_order.order_id) }}" style="padding: 0.5rem 0.75rem; font-size: 0.8rem;">
+                    Invoice Summary
+                </a>
+                <form method="post" action="{{ url_for('cancel_order', order_id=selected_order.order_id) }}" class="inline-form">
+                    <button class="danger-btn" type="submit" data-confirm-delete data-confirm-message="Cancel this order? This will restore stock for all items and delete the order!" style="padding: 0.5rem 0.75rem; font-size: 0.8rem;">
+                        Cancel Order
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="stats-callout" style="margin-bottom: 1.5rem; justify-content: flex-start; padding: 1rem;">
+            <p><strong>Customer:</strong> {{ selected_order.customer_name }} (ID: {{ selected_order.customer_id }})</p>
+            <p><strong>Email:</strong> {{ selected_order.email }} | <strong>Phone:</strong> {{ selected_order.phone }}</p>
+            <p><strong>Shipping Address:</strong> {{ selected_order.address }}</p>
+            <p style="margin-top: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                <strong>Payment:</strong> 
+                <span class="pill {{ selected_order.payment_status }}">{{ selected_order.payment_status }}</span>
+                {% if selected_order.payment_status != 'Completed' %}
+                <a class="text-link" href="{{ url_for('payments', order_id=selected_order.order_id) }}" style="margin-left: 0.5rem;">
+                    Record Payment →
+                </a>
+                {% endif %}
+            </p>
+        </div>
+
+        <div class="panel-head compact">
+            <h4>Items List</h4>
+        </div>
+        <div class="table-wrap" style="margin-bottom: 1.5rem;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Price</th>
+                        <th style="width: 110px;">Qty</th>
+                        <th>Subtotal</th>
+                        <th>Remove</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in selected_items %}
+                    <tr>
+                        <td>
+                            <strong>{{ item.product_name }}</strong>
+                            <br><small style="color: var(--text-muted);">{{ item.category_name }}</small>
+                        </td>
+                        <td>{{ item.price|currency }}</td>
+                        <td>
+                            <form method="post" action="{{ url_for('update_order_item', item_id=item.order_item_id) }}">
+                                <input type="number" name="quantity" value="{{ item.quantity }}" min="1" max="{{ item.stock + item.quantity }}" style="width: 60px; padding: 0.25rem; font-size: 0.85rem;" onchange="this.form.submit()">
+                            </form>
+                        </td>
+                        <td>{{ item.subtotal|currency }}</td>
+                        <td>
+                            <form method="post" action="{{ url_for('delete_order_item', item_id=item.order_item_id) }}" class="inline-form">
+                                <button class="danger-btn" type="submit" data-confirm-delete data-confirm-message="Remove item from order? This will restore stock." style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">
+                                    Delete
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="empty-state">No items added to this order yet. Use the form below to add products.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="subtotal-counter" style="margin-bottom: 2rem;">
+            <span>Order Grand Total:</span>
+            <strong style="font-size: 1.4rem;">{{ selected_order.total_amount|currency }} INR</strong>
+        </div>
+
+        {% if selected_order.payment_status != 'Completed' %}
+        <div class="panel-head compact">
+            <h4>Add Product to Order</h4>
+        </div>
+        <form method="post" action="{{ url_for('add_order_item', order_id=selected_order.order_id) }}" class="form-grid js-validate" data-validate="true">
+            <div class="form-group">
+                <label for="product_id">Choose Product</label>
+                <select id="product_id" name="product_id" data-product-selector required>
+                    <option value="">-- Choose Product --</option>
+                    {% for p in products %}
+                    <option value="{{ p.product_id }}" data-price="{{ p.price }}" data-stock="{{ p.stock }}">
+                        {{ p.product_name }} (Price: {{ p.price|currency }}, Stock: {{ p.stock }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="quantity">Quantity (Stock Available: <span id="stock_val" data-stock-display>0</span>)</label>
+                <input id="quantity" name="quantity" type="number" min="1" value="1" data-quantity-input required>
+            </div>
+            <div class="form-group full-width" style="margin-top: 0.5rem;">
+                <div class="subtotal-counter" style="border-style: dashed;">
+                    <span>Item Subtotal Preview:</span>
+                    <strong><span data-subtotal-display>0.00</span> INR</strong>
+                </div>
+            </div>
+            <div class="form-actions full-width">
+                <button type="submit" class="solid-btn">Add Product</button>
+            </div>
+        </form>
+        {% else %}
+        <div class="stats-callout" style="border-color: var(--color-success); background: var(--color-success-light);">
+            <p style="color: #6ee7b7; font-weight: 600; text-align: center;">Order is paid and locked. Modifying items is disabled.</p>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="empty-state" style="padding: 10rem 1rem;">
+            <p style="font-size: 1.2rem; margin-bottom: 1rem;">No order selected</p>
+            <p style="color: var(--text-secondary);">Select an order from the list on the left or create a new order to start managing products and items.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

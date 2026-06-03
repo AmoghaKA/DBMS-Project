@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="receipt-card">
+    <!-- Receipt Header -->
+    <div class="receipt-header">
+        <div class="receipt-logo">
+            <h2>E-COMMERCE SYSTEM</h2>
+            <p>High-Fidelity Commerce Management Admin Panel</p>
+        </div>
+        <div class="receipt-meta">
+            <p><strong>INVOICE / RECEIPT</strong></p>
+            <p>Order ID: #{{ summary.order_id }}</p>
+            <p>Date: {{ summary.order_date }}</p>
+        </div>
+    </div>
+
+    <!-- Client / Shipping Info -->
+    <div class="receipt-details-section">
+        <div>
+            <h4>Billed To (Customer Details)</h4>
+            <p><strong>{{ summary.customer_name }}</strong></p>
+            <p>Email: {{ summary.email }}</p>
+            <p>Phone: {{ summary.phone }}</p>
+            <p>ID: #{{ summary.customer_id }}</p>
+        </div>
+        <div>
+            <h4>Shipping Address</h4>
+            <p>{{ summary.address }}</p>
+        </div>
+    </div>
+
+    <!-- Items Table -->
+    <div class="table-wrap" style="border: none;">
+        <table style="width: 100%;">
+            <thead>
+                <tr>
+                    <th style="background: #f3f4f6; color: #374151;">Product Name</th>
+                    <th style="background: #f3f4f6; color: #374151;">Category</th>
+                    <th style="background: #f3f4f6; color: #374151; text-align: right;">Unit Price</th>
+                    <th style="background: #f3f4f6; color: #374151; text-align: center;">Quantity</th>
+                    <th style="background: #f3f4f6; color: #374151; text-align: right;">Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td style="color: #111827;"><strong>{{ item.product_name }}</strong></td>
+                    <td style="color: #4b5563;">{{ item.category_name }}</td>
+                    <td style="text-align: right; color: #111827;">{{ item.price|currency }} INR</td>
+                    <td style="text-align: center; color: #111827;">{{ item.quantity }}</td>
+                    <td style="text-align: right; font-weight: 600; color: #111827;">{{ item.subtotal|currency }} INR</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="empty-state" style="color: #6b7280;">No items found in this order.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Summary Total Block -->
+    <div class="receipt-total-block">
+        <div>
+            <span style="color: #4b5563;">Payment Status:</span>
+            <span><strong class="pill {{ summary.payment_status }}">{{ summary.payment_status }}</strong></span>
+        </div>
+        <div>
+            <span style="color: #4b5563;">Payment Method:</span>
+            <span style="color: #111827; font-weight: 500;">{{ summary.payment_method }}</span>
+        </div>
+        <div style="margin-top: 0.5rem; border-top: 1px solid #e5e7eb; padding-top: 0.5rem;">
+            <span style="color: #4b5563; font-weight: 600;">Total Amount Due:</span>
+            <span class="final-amount">{{ summary.total_amount|currency }} INR</span>
+        </div>
+    </div>
+
+    <!-- Print / Back actions -->
+    <div class="receipt-actions">
+        <button class="solid-btn" onclick="window.print()">Print Receipt / Save PDF</button>
+        <a class="ghost-btn" href="{{ url_for('orders', order_id=summary.order_id) }}">Return to Order Desk</a>
+    </div>
+</section>
+{% endblock %}

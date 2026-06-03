@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="panel split-panel">
+    <div>
+        <div class="panel-head compact">
+            <div>
+                <p class="section-kicker">Product Management</p>
+                <h3>{{ 'Update Product' if edit_product else 'Add New Product' }}</h3>
+            </div>
+        </div>
+        <form method="post" class="form-grid js-validate" data-validate="true">
+            {% if edit_product %}
+            <input type="hidden" name="product_id" value="{{ edit_product.product_id }}">
+            {% endif %}
+            <div class="form-group">
+                <label for="product_name">Product Name</label>
+                <input id="product_name" name="product_name" type="text" required value="{{ edit_product.product_name if edit_product else '' }}">
+            </div>
+            <div class="form-group">
+                <label for="category_id">Category</label>
+                <select id="category_id" name="category_id" required>
+                    <option value="">-- Select Category --</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.category_id }}" {{ 'selected' if edit_product and edit_product.category_id == cat.category_id else '' }}>
+                        {{ cat.category_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="price">Price (INR)</label>
+                <input id="price" name="price" type="number" step="0.01" min="0" required value="{{ edit_product.price if edit_product else '' }}">
+            </div>
+            <div class="form-group">
+                <label for="stock">Stock Quantity</label>
+                <input id="stock" name="stock" type="number" min="0" required value="{{ edit_product.stock if edit_product else '' }}">
+            </div>
+            <div class="form-actions full-width">
+                <button type="submit" class="solid-btn">{{ 'Update Product' if edit_product else 'Save Product' }}</button>
+                {% if edit_product %}
+                <a class="ghost-btn" href="{{ url_for('products') }}">Cancel Edit</a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    <div class="stats-callout">
+        <h4>Product Rules</h4>
+        <ul>
+            <li>Price must be greater than or equal to 0.</li>
+            <li>Stock quantity cannot be negative.</li>
+            <li>Products referenced by existing orders cannot be deleted.</li>
+        </ul>
+    </div>
+</section>
+
+<section class="panel">
+    <div class="panel-head">
+        <div>
+            <p class="section-kicker">Product Catalog</p>
+            <h3>View and search products in stock</h3>
+        </div>
+        <input type="search" class="search-input" placeholder="Search catalog" data-search-input>
+    </div>
+    <div class="table-wrap" data-search-table>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Product Name</th>
+                    <th>Category</th>
+                    <th>Price</th>
+                    <th>Stock</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for prod in products %}
+                <tr>
+                    <td>{{ prod.product_id }}</td>
+                    <td><strong>{{ prod.product_name }}</strong></td>
+                    <td><span class="pill info-pill">{{ prod.category_name }}</span></td>
+                    <td>{{ prod.price|currency }}</td>
+                    <td>
+                        {% if prod.stock == 0 %}
+                        <span class="pill Failed">Out of Stock</span>
+                        {% elif prod.stock <= 5 %}
+                        <span class="pill Pending">Low Stock ({{ prod.stock }})</span>
+                        {% else %}
+                        <span class="pill Completed">{{ prod.stock }} Units</span>
+                        {% endif %}
+                    </td>
+                    <td class="action-cell">
+                        <a class="text-link" href="{{ url_for('products', edit_id=prod.product_id) }}">Edit</a>
+                        <form method="post" action="{{ url_for('delete_product', product_id=prod.product_id) }}" class="inline-form">
+                            <button class="danger-btn" type="submit" data-confirm-delete data-confirm-message="Delete this product?">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="empty-state">No products available yet. First add a category, then add a product.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

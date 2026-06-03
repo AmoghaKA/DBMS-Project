@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ page_title or 'E-Commerce Management System' }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script defer src="{{ url_for('static', filename='js/script.js') }}"></script>
+</head>
+<body>
+<div class="app-shell">
+    <aside class="sidebar">
+        <div class="brand">
+            <span class="brand-mark">EC</span>
+            <div>
+                <h1>E-Commerce</h1>
+                <p>Management System</p>
+            </div>
+        </div>
+        <nav class="nav-links">
+            <a href="{{ url_for('index') }}" class="{{ 'active' if active_page == 'dashboard' else '' }}">Dashboard</a>
+            <a href="{{ url_for('customers') }}" class="{{ 'active' if active_page == 'customers' else '' }}">Customers</a>
+            <a href="{{ url_for('categories') }}" class="{{ 'active' if active_page == 'categories' else '' }}">Categories</a>
+            <a href="{{ url_for('products') }}" class="{{ 'active' if active_page == 'products' else '' }}">Products</a>
+            <a href="{{ url_for('orders') }}" class="{{ 'active' if active_page == 'orders' else '' }}">Orders</a>
+            <a href="{{ url_for('payments') }}" class="{{ 'active' if active_page == 'payments' else '' }}">Payments</a>
+        </nav>
+        <div class="sidebar-note">
+            Oracle XE + Flask + Vanilla JavaScript
+        </div>
+    </aside>
+
+    <div class="main-area">
+        <header class="topbar">
+            <div>
+                <p class="eyebrow">Full-Stack Commerce Admin</p>
+                <h2>{{ page_title or 'Dashboard' }}</h2>
+            </div>
+            <div class="topbar-actions">
+                <a class="ghost-btn" href="{{ url_for('orders') }}">Open Orders</a>
+                <a class="solid-btn" href="{{ url_for('payments') }}">Manage Payments</a>
+            </div>
+        </header>
+
+        <main class="content-area">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <section class="flash-stack">
+                        {% for category, message in messages %}
+                            <div class="flash {{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    </section>
+                {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+</div>
+</body>
+</html>

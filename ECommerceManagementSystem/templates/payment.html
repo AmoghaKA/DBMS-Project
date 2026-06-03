@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="panel split-panel">
+    <div>
+        <div class="panel-head compact">
+            <div>
+                <p class="section-kicker">Transaction Register</p>
+                <h3>{{ 'Update Payment details' if selected_order and selected_order.payment_status != 'Unpaid' else 'Record Payment' }}</h3>
+            </div>
+        </div>
+
+        <form method="post" action="{{ url_for('make_payment') }}" class="form-grid js-validate" data-validate="true">
+            {% if selected_order %}
+            <div class="form-group full-width">
+                <div class="stats-callout" style="padding: 1rem; border-color: var(--color-primary); background: rgba(99, 102, 241, 0.05);">
+                    <p><strong>Order ID:</strong> #{{ selected_order.order_id }}</p>
+                    <p><strong>Customer Name:</strong> {{ selected_order.customer_name }}</p>
+                    <p><strong>Order Total:</strong> {{ selected_order.total_amount|currency }} INR</p>
+                    <p><strong>Current Payment Status:</strong> <span class="pill {{ selected_order.payment_status }}">{{ selected_order.payment_status }}</span></p>
+                </div>
+                <input type="hidden" name="order_id" value="{{ selected_order.order_id }}">
+            </div>
+            {% else %}
+            <div class="form-group full-width">
+                <label for="order_id">Select Unpaid/Active Order</label>
+                <select id="order_id" name="order_id" required>
+                    <option value="">-- Choose Order --</option>
+                    {% for o in orders %}
+                    <option value="{{ o.order_id }}">
+                        Order #{{ o.order_id }} (Customer: {{ o.customer_name }}, Total: {{ o.total_amount|currency }}, Status: {{ o.payment_status }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+
+            <div class="form-group">
+                <label for="payment_method">Payment Method</label>
+                <select id="payment_method" name="payment_method" required>
+                    <option value="">-- Choose Method --</option>
+                    {% for method in payment_methods %}
+                    <option value="{{ method }}" {{ 'selected' if selected_order and selected_order.payment_method == method else '' }}>
+                        {{ method }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="payment_status">Payment Status</label>
+                <select id="payment_status" name="payment_status" required>
+                    <option value="">-- Choose Status --</option>
+                    {% for status in payment_statuses %}
+                    <option value="{{ status }}" {{ 'selected' if selected_order and selected_order.payment_status == status else '' }}>
+                        {{ status }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-actions full-width">
+                <button type="submit" class="solid-btn">Save Transaction</button>
+                {% if selected_order %}
+                <a class="ghost-btn" href="{{ url_for('payments') }}">Reset Selection</a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    <div class="stats-callout">
+        <h4>Payment Flow</h4>
+        <ul>
+            <li>Payments are bound 1:1 with Orders.</li>
+            <li>Recording a payment will automatically set the corresponding status in the Order summary.</li>
+            <li>Acceptable statuses: Pending, Completed, Failed, Refunded.</li>
+            <li>Once recorded, invoices can be generated from the Orders summary panel.</li>
+        </ul>
+    </div>
+</section>
+
+<section class="panel">
+    <div class="panel-head">
+        <div>
+            <p class="section-kicker">Payment History</p>
+            <h3>Historical transaction logs</h3>
+        </div>
+        <input type="search" class="search-input" placeholder="Search payments" data-search-input>
+    </div>
+    <div class="table-wrap" data-search-table>
+        <table>
+            <thead>
+                <tr>
+                    <th>Payment ID</th>
+                    <th>Order ID</th>
+                    <th>Customer</th>
+                    <th>Method</th>
+                    <th>Amount Paid</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in payments %}
+                <tr>
+                    <td>#{{ p.payment_id }}</td>
+                    <td>
+                        <a class="text-link" href="{{ url_for('orders', order_id=p.order_id) }}">
+                            #{{ p.order_id }}
+                        </a>
+                    </td>
+                    <td>{{ p.customer_name }}</td>
+                    <td><strong>{{ p.payment_method }}</strong></td>
+                    <td>{{ p.amount|currency }} INR</td>
+                    <td><span class="pill {{ p.payment_status }}">{{ p.payment_status }}</span></td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="empty-state">No payment transactions recorded yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

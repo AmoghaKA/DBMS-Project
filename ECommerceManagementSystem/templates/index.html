@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="hero-panel">
+    <div>
+        <p class="section-kicker">Dashboard</p>
+        <h3>Track customers, inventory, orders, and payments from one panel.</h3>
+        <p class="section-copy">The system uses Flask templates and Oracle sequences, constraints, and joins to keep commerce operations consistent.</p>
+    </div>
+    <div class="hero-actions">
+        <a class="solid-btn" href="{{ url_for('customers') }}">Register Customer</a>
+        <a class="ghost-btn" href="{{ url_for('products') }}">Add Product</a>
+    </div>
+</section>
+
+<section class="dashboard-grid metrics-grid">
+    <article class="metric-card accent-one">
+        <span>Customers</span>
+        <strong>{{ stats.customers }}</strong>
+    </article>
+    <article class="metric-card accent-two">
+        <span>Categories</span>
+        <strong>{{ stats.categories }}</strong>
+    </article>
+    <article class="metric-card accent-three">
+        <span>Products</span>
+        <strong>{{ stats.products }}</strong>
+    </article>
+    <article class="metric-card accent-four">
+        <span>Orders</span>
+        <strong>{{ stats.orders }}</strong>
+    </article>
+    <article class="metric-card accent-five">
+        <span>Payments</span>
+        <strong>{{ stats.payments }}</strong>
+    </article>
+</section>
+
+<section class="panel">
+    <div class="panel-head">
+        <div>
+            <p class="section-kicker">Recent Orders</p>
+            <h3>Latest activity</h3>
+        </div>
+        <a class="ghost-btn" href="{{ url_for('orders') }}">Open Order Desk</a>
+    </div>
+    <div class="table-toolbar">
+        <input type="search" class="search-input" placeholder="Search recent orders" data-search-input>
+    </div>
+    <div class="table-wrap" data-search-table>
+        <table>
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Date</th>
+                    <th>Customer</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in recent_orders %}
+                <tr>
+                    <td>#{{ order.order_id }}</td>
+                    <td>{{ order.order_date }}</td>
+                    <td>{{ order.customer_name }}</td>
+                    <td>{{ order.total_amount|currency }}</td>
+                    <td><span class="pill">{{ order.payment_status }}</span></td>
+                    <td>
+                        <a class="text-link" href="{{ url_for('order_summary', order_id=order.order_id) }}">View Summary</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="empty-state">No orders yet. Create the first order from the Orders page.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

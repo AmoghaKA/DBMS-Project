@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="panel split-panel">
+    <div>
+        <div class="panel-head compact">
+            <div>
+                <p class="section-kicker">Customer Management</p>
+                <h3>{{ 'Update Customer' if edit_customer else 'Register Customer' }}</h3>
+            </div>
+        </div>
+        <form method="post" class="form-grid js-validate" data-validate="true">
+            {% if edit_customer %}
+            <input type="hidden" name="customer_id" value="{{ edit_customer.customer_id }}">
+            {% endif %}
+            <div class="form-group">
+                <label for="name">Full Name</label>
+                <input id="name" name="name" type="text" required value="{{ edit_customer.name if edit_customer else '' }}">
+            </div>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input id="email" name="email" type="email" required value="{{ edit_customer.email if edit_customer else '' }}">
+            </div>
+            <div class="form-group">
+                <label for="phone">Phone</label>
+                <input id="phone" name="phone" type="text" required value="{{ edit_customer.phone if edit_customer else '' }}">
+            </div>
+            <div class="form-group full-width">
+                <label for="address">Address</label>
+                <textarea id="address" name="address" rows="3" required>{{ edit_customer.address if edit_customer else '' }}</textarea>
+            </div>
+            <div class="form-actions full-width">
+                <button type="submit" class="solid-btn">{{ 'Update Customer' if edit_customer else 'Save Customer' }}</button>
+                {% if edit_customer %}
+                <a class="ghost-btn" href="{{ url_for('customers') }}">Cancel Edit</a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    <div class="stats-callout">
+        <h4>Customer Rules</h4>
+        <ul>
+            <li>Email addresses must be unique.</li>
+            <li>Customers with orders cannot be deleted.</li>
+            <li>All fields are validated before save.</li>
+        </ul>
+    </div>
+</section>
+
+<section class="panel">
+    <div class="panel-head">
+        <div>
+            <p class="section-kicker">Customer Directory</p>
+            <h3>View and manage all customers</h3>
+        </div>
+        <input type="search" class="search-input" placeholder="Search customers" data-search-input>
+    </div>
+    <div class="table-wrap" data-search-table>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Address</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for customer in customers %}
+                <tr>
+                    <td>{{ customer.customer_id }}</td>
+                    <td>{{ customer.name }}</td>
+                    <td>{{ customer.email }}</td>
+                    <td>{{ customer.phone }}</td>
+                    <td>{{ customer.address }}</td>
+                    <td class="action-cell">
+                        <a class="text-link" href="{{ url_for('customers', edit_id=customer.customer_id) }}">Edit</a>
+                        <form method="post" action="{{ url_for('delete_customer', customer_id=customer.customer_id) }}" class="inline-form">
+                            <button class="danger-btn" type="submit" data-confirm-delete data-confirm-message="Delete this customer?">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="empty-state">No customers available yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

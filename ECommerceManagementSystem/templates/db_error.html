@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Database Configuration Required</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .error-container {
+            max-width: 750px;
+            margin: 4rem auto;
+            padding: 2rem;
+        }
+        .diagnostic-card {
+            background: rgba(244, 63, 94, 0.08);
+            border: 1px solid rgba(244, 63, 94, 0.25);
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+        .code-box {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border-light);
+            padding: 1rem;
+            border-radius: var(--radius-sm);
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.85rem;
+            color: #38bdf8;
+            overflow-x: auto;
+            margin-top: 1rem;
+        }
+        .tip-list li {
+            margin-bottom: 0.75rem;
+        }
+    </style>
+</head>
+<body style="display: flex; align-items: center; min-height: 100vh;">
+    <div class="panel error-container">
+        <div class="panel-head">
+            <div>
+                <p class="section-kicker" style="color: var(--color-danger);">Database Connectivity Alert</p>
+                <h3 style="font-size: 1.8rem; margin-top: 0.25rem;">Oracle Database Connection Error</h3>
+            </div>
+        </div>
+
+        <p class="section-copy" style="font-size: 1rem; line-height: 1.6;">
+            The Flask server started successfully, but it cannot communicate with your Oracle Database instance. 
+            Here are the current connection settings:
+        </p>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+            <div class="stats-callout" style="padding: 1rem;">
+                <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: bold; text-transform: uppercase;">Connection DSN</span>
+                <strong style="color: white; font-size: 1.05rem;">{{ oracle_dsn }}</strong>
+            </div>
+            <div class="stats-callout" style="padding: 1rem;">
+                <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: bold; text-transform: uppercase;">Database User</span>
+                <strong style="color: white; font-size: 1.05rem;">{{ oracle_user }}</strong>
+            </div>
+        </div>
+
+        <div class="diagnostic-card">
+            <h4 style="color: #fda4af; font-size: 1rem; margin-bottom: 0.5rem; font-weight: 600;">System Error Message</h4>
+            <p style="font-family: monospace; font-size: 0.85rem; color: #f8fafc; word-break: break-all;">
+                {{ error_message }}
+            </p>
+        </div>
+
+        <h3>🔍 Troubleshooting & Diagnostics</h3>
+        
+        <ul class="tip-list" style="margin-top: 1rem; padding-left: 1.25rem; color: var(--text-secondary); font-size: 0.95rem;">
+            {% if is_credentials_error %}
+            <li>
+                <strong>Issue: Authentication Denied (ORA-01017)</strong><br>
+                The username or password provided is incorrect, or the user does not exist in the database.
+                <br><br>
+                To create the user, run these statements in SQL Developer as **`system`**:
+                <div class="code-box">
+ALTER SESSION SET "_ORACLE_SCRIPT"=true;
+CREATE USER ecommerce_user IDENTIFIED BY ecommerce_password;
+GRANT CONNECT, RESOURCE, CREATE VIEW, CREATE SEQUENCE, CREATE TRIGGER, CREATE PROCEDURE TO ecommerce_user;
+ALTER USER ecommerce_user QUOTA UNLIMITED ON USERS;</div>
+            </li>
+            {% elif is_listener_error %}
+            <li>
+                <strong>Issue: Network / Listener Offline</strong><br>
+                Flask cannot reach the Oracle service. Check if:
+                <ul style="padding-left: 1.25rem; margin-top: 0.25rem; list-style: circle;">
+                    <li>Your local Oracle service is running (e.g. look for <strong>OracleServiceXE</strong> or similar in Windows Services).</li>
+                    <li>The connection host or port is correct (default port is 1521).</li>
+                    <li>Your DSN (e.g., `localhost/XEPDB1`) matches your local database instance service name.</li>
+                </ul>
+            </li>
+            {% elif is_missing_tables %}
+            <li>
+                <strong>Issue: Database Schema Missing (ORA-00942 or ORA-02289)</strong><br>
+                The user connected successfully, but the tables or sequences are missing.
+                <br><br>
+                Please connect to SQL Developer as <strong>`ecommerce_user`</strong> and run all the scripts in the <code>sql/</code> folder:
+                <ul style="padding-left: 1.25rem; margin-top: 0.25rem; list-style: decimal;">
+                    <li><code>sequences.sql</code></li>
+                    <li><code>tables.sql</code></li>
+                    <li><code>trigger.sql</code></li>
+                    <li><code>procedure.sql</code></li>
+                    <li><code>sample_data.sql</code></li>
+                </ul>
+            </li>
+            {% else %}
+            <li>
+                <strong>General Database Failure</strong><br>
+                Confirm your Oracle Database service is online. Make sure you have run the schema compilation scripts (`tables.sql`, `sequences.sql`, etc.) under the <strong>`ecommerce_user`</strong> account.
+            </li>
+            {% endif %}
+        </ul>
+
+        <div style="margin-top: 2rem; text-align: center;">
+            <a class="solid-btn" href="/">Retry Connection</a>
+            <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.75rem;">
+                Restart Flask after updating environment variables or running SQL scripts.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

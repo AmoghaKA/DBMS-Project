@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="panel split-panel">
+    <div>
+        <div class="panel-head compact">
+            <div>
+                <p class="section-kicker">Category Management</p>
+                <h3>{{ 'Update Category' if edit_category else 'Add New Category' }}</h3>
+            </div>
+        </div>
+        <form method="post" class="form-grid single-col js-validate" data-validate="true">
+            {% if edit_category %}
+            <input type="hidden" name="category_id" value="{{ edit_category.category_id }}">
+            {% endif %}
+            <div class="form-group">
+                <label for="category_name">Category Name</label>
+                <input id="category_name" name="category_name" type="text" required value="{{ edit_category.category_name if edit_category else '' }}">
+            </div>
+            <div class="form-group">
+                <label for="description">Description</label>
+                <textarea id="description" name="description" rows="3">{{ edit_category.description if edit_category else '' }}</textarea>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="solid-btn">{{ 'Update Category' if edit_category else 'Save Category' }}</button>
+                {% if edit_category %}
+                <a class="ghost-btn" href="{{ url_for('categories') }}">Cancel Edit</a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    <div class="stats-callout">
+        <h4>Category Rules</h4>
+        <ul>
+            <li>Category names must be unique.</li>
+            <li>Categories containing active products cannot be deleted.</li>
+            <li>Deleting a category will set the associated products' category to null (ON DELETE SET NULL).</li>
+        </ul>
+    </div>
+</section>
+
+<section class="panel">
+    <div class="panel-head">
+        <div>
+            <p class="section-kicker">Category Directory</p>
+            <h3>View and manage all categories</h3>
+        </div>
+        <input type="search" class="search-input" placeholder="Search categories" data-search-input>
+    </div>
+    <div class="table-wrap" data-search-table>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Category Name</th>
+                    <th>Description</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for category in categories %}
+                <tr>
+                    <td>{{ category.category_id }}</td>
+                    <td><strong>{{ category.category_name }}</strong></td>
+                    <td>{{ category.description if category.description else 'N/A' }}</td>
+                    <td class="action-cell">
+                        <a class="text-link" href="{{ url_for('categories', edit_id=category.category_id) }}">Edit</a>
+                        <form method="post" action="{{ url_for('delete_category', category_id=category.category_id) }}" class="inline-form">
+                            <button class="danger-btn" type="submit" data-confirm-delete data-confirm-message="Delete this category? Products in this category will have their category cleared.">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" class="empty-state">No categories available yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}
